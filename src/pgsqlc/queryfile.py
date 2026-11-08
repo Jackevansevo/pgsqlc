@@ -186,7 +186,7 @@ def _check_param_names(named: tuple[ParsedParam, ...]) -> None:
         if not p.name.isidentifier() or keyword.iskeyword(p.name):
             msg = f"parameter name {p.name!r} is not a valid Python identifier"
             raise ValueError(msg)
-        if p.name in {"conn", "row"} or p.name.startswith("_"):
+        if p.name in {"db", "row"} or p.name.startswith("_"):
             msg = f"parameter name {p.name!r} is reserved; rename it"
             raise ValueError(msg)
 

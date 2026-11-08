@@ -6,24 +6,17 @@ Source: records.sql
 from datetime import date as _date
 from typing import Final
 
-from asyncpg import Connection, Pool
-from asyncpg.pool import PoolConnectionProxy
-
-from .models import Record
+from .models import DB, Record
 
 INSERT_RECORD: Final = "insert into record (id, date) values ($1, $2)"
 
 
-async def insert_record(
-    conn: Connection | Pool | PoolConnectionProxy, *, id: int, date: _date
-) -> None:
-    await conn.execute(INSERT_RECORD, id, date)
+async def insert_record(db: DB, *, id: int, date: _date) -> None:
+    await db.execute(INSERT_RECORD, id, date)
 
 
 RECORDS_ON: Final = "select * from record where date = $1 order by id"
 
 
-async def records_on(
-    conn: Connection | Pool | PoolConnectionProxy, *, date: _date
-) -> list[Record]:
-    return [Record.from_record(r) for r in await conn.fetch(RECORDS_ON, date)]
+async def records_on(db: DB, *, date: _date) -> list[Record]:
+    return [Record.from_record(r) for r in await db.fetch(RECORDS_ON, date)]

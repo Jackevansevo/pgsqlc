@@ -7,32 +7,27 @@ from collections.abc import Sequence
 from dataclasses import astuple, dataclass
 from typing import Final, Self
 
-from asyncpg import Connection, Pool, Record
-from asyncpg.pool import PoolConnectionProxy
+from asyncpg import Record
 
-from .models import Address, Authors, Mood, NoRowsError
+from .models import DB, Address, Authors, Mood, NoRowsError
 
 GET_AUTHOR: Final = (
     "select id, name, bio, mood, tags, home, rating from authors where id = $1"
 )
 
 
-async def get_author(
-    conn: Connection | Pool | PoolConnectionProxy, *, id: int
-) -> Authors | None:
+async def get_author(db: DB, *, id: int) -> Authors | None:
     """Fetch one author by primary key."""
-    row = await conn.fetchrow(GET_AUTHOR, id)
+    row = await db.fetchrow(GET_AUTHOR, id)
     return None if row is None else Authors.from_record(row)
 
 
 REQUIRE_AUTHOR: Final = "select * from authors where id = $1"
 
 
-async def require_author(
-    conn: Connection | Pool | PoolConnectionProxy, *, id: int
-) -> Authors:
+async def require_author(db: DB, *, id: int) -> Authors:
     """Like GetAuthor, but the author must exist."""
-    row = await conn.fetchrow(REQUIRE_AUTHOR, id)
+    row = await db.fetchrow(REQUIRE_AUTHOR, id)
     if row is None:
         raise NoRowsError("query RequireAuthor returned no rows")
     return Authors.from_record(row)
@@ -41,8 +36,8 @@ async def require_author(
 LIST_AUTHORS: Final = "select * from authors order by id"
 
 
-async def list_authors(conn: Connection | Pool | PoolConnectionProxy) -> list[Authors]:
-    return [Authors.from_record(r) for r in await conn.fetch(LIST_AUTHORS)]
+async def list_authors(db: DB) -> list[Authors]:
+    return [Authors.from_record(r) for r in await db.fetch(LIST_AUTHORS)]
 
 
 CREATE_AUTHOR: Final = """
@@ -53,7 +48,7 @@ returning *
 
 
 async def create_author(
-    conn: Connection | Pool | PoolConnectionProxy,
+    db: DB,
     *,
     name: str,
     bio: str | None,
@@ -61,7 +56,7 @@ async def create_author(
     tags: Sequence[str | None],
     home: Address | None,
 ) -> Authors:
-    row = await conn.fetchrow(
+    row = await db.fetchrow(
         CREATE_AUTHOR, name, bio, mood, tags, None if home is None else astuple(home)
     )
     if row is None:
@@ -72,19 +67,15 @@ async def create_author(
 RENAME_AUTHOR: Final = "update authors set name = $1 where id = $2"
 
 
-async def rename_author(
-    conn: Connection | Pool | PoolConnectionProxy, *, name: str, id: int
-) -> int:
-    return int((await conn.execute(RENAME_AUTHOR, name, id)).rpartition(" ")[2])
+async def rename_author(db: DB, *, name: str, id: int) -> int:
+    return int((await db.execute(RENAME_AUTHOR, name, id)).rpartition(" ")[2])
 
 
 DELETE_AUTHOR: Final = "delete from authors where id = $1"
 
 
-async def delete_author(
-    conn: Connection | Pool | PoolConnectionProxy, *, p1: int
-) -> None:
-    await conn.execute(DELETE_AUTHOR, p1)
+async def delete_author(db: DB, *, p1: int) -> None:
+    await db.execute(DELETE_AUTHOR, p1)
 
 
 AUTHORS_BY_MOODS: Final = (
@@ -103,11 +94,11 @@ class AuthorsByMoodsRow:
 
 
 async def authors_by_moods(
-    conn: Connection | Pool | PoolConnectionProxy, *, moods: Sequence[Mood | None]
+    db: DB, *, moods: Sequence[Mood | None]
 ) -> list[AuthorsByMoodsRow]:
     return [
         AuthorsByMoodsRow.from_record(r)
-        for r in await conn.fetch(AUTHORS_BY_MOODS, moods)
+        for r in await db.fetch(AUTHORS_BY_MOODS, moods)
     ]
 
 
@@ -123,10 +114,8 @@ class CountAuthorsRow:
         return cls(n=r[0])
 
 
-async def count_authors(
-    conn: Connection | Pool | PoolConnectionProxy,
-) -> CountAuthorsRow:
-    row = await conn.fetchrow(COUNT_AUTHORS)
+async def count_authors(db: DB) -> CountAuthorsRow:
+    row = await db.fetchrow(COUNT_AUTHORS)
     if row is None:
         raise NoRowsError("query CountAuthors returned no rows")
     return CountAuthorsRow.from_record(row)

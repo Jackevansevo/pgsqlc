@@ -1,2 +1,2 @@
 -- name: Reserved :one
-select id from authors where id = @conn;
+select id from authors where id = @db;

@@ -7,7 +7,11 @@ from dataclasses import dataclass
 from datetime import date as _date
 from typing import Self
 
+from asyncpg import Connection, Pool
 from asyncpg import Record as _Record
+from asyncpg.pool import PoolConnectionProxy
+
+type DB = Connection | Pool | PoolConnectionProxy
 
 
 class NoRowsError(LookupError):

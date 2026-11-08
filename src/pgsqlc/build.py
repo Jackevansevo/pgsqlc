@@ -11,6 +11,7 @@ import psycopg
 from pgsqlc.errors import PgsqlcError
 from pgsqlc.introspect import Attribute, Database, DescribedColumn
 from pgsqlc.ir import (
+    DB_ALIAS,
     NO_ROWS_ERROR,
     Builtin,
     Command,
@@ -150,7 +151,10 @@ class _Builder:
         self._enums: dict[int, EnumDef] = {}
         self._composites: dict[int, RecordDef] = {}
         self._tables: dict[int, RecordDef] = {}
-        self._claimed: dict[str, str] = {NO_ROWS_ERROR: "pgsqlc's exception"}
+        self._claimed: dict[str, str] = {
+            NO_ROWS_ERROR: "pgsqlc's exception",
+            DB_ALIAS: "pgsqlc's connection type",
+        }
 
     def _claim(self, class_name: str, source: str) -> None:
         owner = self._claimed.get(class_name)

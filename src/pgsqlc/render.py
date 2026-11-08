@@ -12,6 +12,7 @@ import sys
 from dataclasses import dataclass, field
 
 from pgsqlc.ir import (
+    DB_ALIAS,
     NO_ROWS_ERROR,
     Builtin,
     Command,
@@ -233,14 +234,20 @@ def _record_class(r: RecordDef, imp: _Imports) -> ast.stmt:
     return ast.ClassDef(r.name, [], [], [*fields, from_record], [decorator])
 
 
-def _conn_annotation(imp: _Imports) -> ast.expr:
-    return _union(
+def _db_alias(imp: _Imports) -> ast.stmt:
+    """``type DB = Connection | Pool | PoolConnectionProxy``.
+
+    asyncpg has no common base for what can run a query: a pool connection is
+    a proxy, not a ``Connection`` subclass.
+    """
+    value = _union(
         [
             imp.attr("asyncpg", "Connection"),
             imp.attr("asyncpg", "Pool"),
             imp.attr(_POOL_MODULE, "PoolConnectionProxy"),
         ]
     )
+    return ast.TypeAlias(ast.Name(DB_ALIAS), [], value)
 
 
 def _await_call(method: str, q: Query, imp: _Imports) -> ast.expr:
@@ -248,7 +255,7 @@ def _await_call(method: str, q: Query, imp: _Imports) -> ast.expr:
     args.extend(
         _encode(p.type, ast.Name(p.name), imp) or ast.Name(p.name) for p in q.params
     )
-    return ast.Await(ast.Call(ast.Attribute(ast.Name("conn"), method), args, []))
+    return ast.Await(ast.Call(ast.Attribute(ast.Name("db"), method), args, []))
 
 
 def _result_class(q: Query, imp: _Imports) -> ast.expr:
@@ -318,7 +325,7 @@ def _function(q: Query, imp: _Imports) -> ast.stmt:
         body.insert(0, _docstring(q.doc))
     args = ast.arguments(
         [],
-        [ast.arg("conn", _conn_annotation(imp))],
+        [ast.arg("db", imp.model(DB_ALIAS))],
         None,
         [_param_arg(p, imp) for p in q.params],
         [None for _ in q.params],
@@ -366,7 +373,7 @@ def _no_rows_error_class() -> ast.stmt:
 
 def _models_source(package: Package) -> str:
     imp = _Imports(in_models=True)
-    body: list[ast.stmt] = [_no_rows_error_class()]
+    body: list[ast.stmt] = [_db_alias(imp), _no_rows_error_class()]
     body.extend(_enum_class(e, imp) for e in package.enums)
     body.extend(_record_class(r, imp) for r in (*package.composites, *package.tables))
     return _module_source(

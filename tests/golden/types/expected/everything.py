@@ -18,10 +18,9 @@ from ipaddress import (
 from typing import Final, Self
 from uuid import UUID
 
-from asyncpg import BitString, Connection, Point, Pool, Range, Record
-from asyncpg.pool import PoolConnectionProxy
+from asyncpg import BitString, Point, Range, Record
 
-from .models import AssetType, Color, Everything, EverythingNames, Shape
+from .models import DB, AssetType, Color, Everything, EverythingNames, Shape
 
 INSERT_EVERYTHING: Final = """
 insert into everything (
@@ -38,7 +37,7 @@ returning *
 
 
 async def insert_everything(
-    conn: Connection | Pool | PoolConnectionProxy,
+    db: DB,
     *,
     b: bool,
     i2: int,
@@ -73,7 +72,7 @@ async def insert_everything(
     mail: str,
     note: str | None,
 ) -> Everything | None:
-    row = await conn.fetchrow(
+    row = await db.fetchrow(
         INSERT_EVERYTHING,
         b,
         i2,
@@ -129,10 +128,8 @@ class GetShapesRow:
         )
 
 
-async def get_shapes(
-    conn: Connection | Pool | PoolConnectionProxy, *, id: int
-) -> GetShapesRow | None:
-    row = await conn.fetchrow(GET_SHAPES, id)
+async def get_shapes(db: DB, *, id: int) -> GetShapesRow | None:
+    row = await db.fetchrow(GET_SHAPES, id)
     return None if row is None else GetShapesRow.from_record(row)
 
 
@@ -154,8 +151,8 @@ class ComputedRow:
         return cls(n=r[0], top=r[1], at=r[2], nothing=r[3])
 
 
-async def computed(conn: Connection | Pool | PoolConnectionProxy) -> ComputedRow | None:
-    row = await conn.fetchrow(COMPUTED)
+async def computed(db: DB) -> ComputedRow | None:
+    row = await db.fetchrow(COMPUTED)
     return None if row is None else ComputedRow.from_record(row)
 
 
@@ -174,8 +171,8 @@ class RollupRow:
         return cls(txt=r[0], n=r[1])
 
 
-async def rollup(conn: Connection | Pool | PoolConnectionProxy) -> list[RollupRow]:
-    return [RollupRow.from_record(r) for r in await conn.fetch(ROLLUP)]
+async def rollup(db: DB) -> list[RollupRow]:
+    return [RollupRow.from_record(r) for r in await db.fetch(ROLLUP)]
 
 
 POSITIONAL: Final = "select id, txt from everything where id = $1 or txt = $2::text"
@@ -191,10 +188,8 @@ class PositionalRow:
         return cls(id=r[0], txt=r[1])
 
 
-async def positional(
-    conn: Connection | Pool | PoolConnectionProxy, *, p1: int, p2: str
-) -> list[PositionalRow]:
-    return [PositionalRow.from_record(r) for r in await conn.fetch(POSITIONAL, p1, p2)]
+async def positional(db: DB, *, p1: int, p2: str) -> list[PositionalRow]:
+    return [PositionalRow.from_record(r) for r in await db.fetch(POSITIONAL, p1, p2)]
 
 
 RENAMED: Final = "select id, txt as label from everything"
@@ -210,18 +205,16 @@ class RenamedRow:
         return cls(id=r[0], label=r[1])
 
 
-async def renamed(conn: Connection | Pool | PoolConnectionProxy) -> list[RenamedRow]:
+async def renamed(db: DB) -> list[RenamedRow]:
     """Aliasing a column means the table model is not reused."""
-    return [RenamedRow.from_record(r) for r in await conn.fetch(RENAMED)]
+    return [RenamedRow.from_record(r) for r in await db.fetch(RENAMED)]
 
 
 VIEW_ROWS: Final = "select * from everything_names"
 
 
-async def view_rows(
-    conn: Connection | Pool | PoolConnectionProxy,
-) -> list[EverythingNames]:
-    return [EverythingNames.from_record(r) for r in await conn.fetch(VIEW_ROWS)]
+async def view_rows(db: DB) -> list[EverythingNames]:
+    return [EverythingNames.from_record(r) for r in await db.fetch(VIEW_ROWS)]
 
 
 SUBQUERY: Final = "select x.txt from (select txt from everything) x"
@@ -236,8 +229,8 @@ class SubqueryRow:
         return cls(txt=r[0])
 
 
-async def subquery(conn: Connection | Pool | PoolConnectionProxy) -> list[SubqueryRow]:
-    return [SubqueryRow.from_record(r) for r in await conn.fetch(SUBQUERY)]
+async def subquery(db: DB) -> list[SubqueryRow]:
+    return [SubqueryRow.from_record(r) for r in await db.fetch(SUBQUERY)]
 
 
 CTE_ROWS: Final = (
@@ -255,8 +248,8 @@ class CteRowsRow:
         return cls(id=r[0], txt=r[1])
 
 
-async def cte_rows(conn: Connection | Pool | PoolConnectionProxy) -> list[CteRowsRow]:
-    return [CteRowsRow.from_record(r) for r in await conn.fetch(CTE_ROWS)]
+async def cte_rows(db: DB) -> list[CteRowsRow]:
+    return [CteRowsRow.from_record(r) for r in await db.fetch(CTE_ROWS)]
 
 
 LITERAL_STRINGS: Final = "select '@notaparam $1' as lit, $$sqlc.arg(x)$$ as dollar, $1::text as real -- @nope"
@@ -273,11 +266,9 @@ class LiteralStringsRow:
         return cls(lit=r[0], dollar=r[1], real=r[2])
 
 
-async def literal_strings(
-    conn: Connection | Pool | PoolConnectionProxy, *, real: str
-) -> LiteralStringsRow | None:
+async def literal_strings(db: DB, *, real: str) -> LiteralStringsRow | None:
     """'@notaparam' and $1 inside literals and comments are left alone."""
-    row = await conn.fetchrow(LITERAL_STRINGS, real)
+    row = await db.fetchrow(LITERAL_STRINGS, real)
     return None if row is None else LiteralStringsRow.from_record(row)
 
 
@@ -293,9 +284,7 @@ class AnyAssetRow:
         return cls(t=None if r[0] is None else AssetType(r[0]))
 
 
-async def any_asset(
-    conn: Connection | Pool | PoolConnectionProxy,
-) -> AnyAssetRow | None:
+async def any_asset(db: DB) -> AnyAssetRow | None:
     """Enum labels in PascalCase/camelCase are split into words for member names."""
-    row = await conn.fetchrow(ANY_ASSET)
+    row = await db.fetchrow(ANY_ASSET)
     return None if row is None else AnyAssetRow.from_record(row)

@@ -10,7 +10,10 @@ from enum import StrEnum
 from typing import Self
 from uuid import UUID
 
-from asyncpg import Record
+from asyncpg import Connection, Pool, Record
+from asyncpg.pool import PoolConnectionProxy
+
+type DB = Connection | Pool | PoolConnectionProxy
 
 
 class NoRowsError(LookupError):

@@ -35,8 +35,6 @@ pgsqlc queries/ -o src/app/db --db postgresql://localhost/exampledb
 | `--db` | Postgres 16+ URL (default `$DATABASE_URL`). |
 | `--check` | Write nothing; exit 1 if any generated file would change. |
 
-Exit codes: `0` success, `1` out of date (`--check`), `2` error.
-
 ## Example
 
 Given this schema:
@@ -74,7 +72,10 @@ Shared enums, composite types and table models.
 from dataclasses import dataclass
 from typing import Self
 
-from asyncpg import Record
+from asyncpg import Connection, Pool, Record
+from asyncpg.pool import PoolConnectionProxy
+
+type DB = Connection | Pool | PoolConnectionProxy
 
 
 class NoRowsError(LookupError):
@@ -102,29 +103,22 @@ Source: authors.sql
 
 from typing import Final
 
-from asyncpg import Connection, Pool
-from asyncpg.pool import PoolConnectionProxy
-
-from .models import Authors, NoRowsError
+from .models import DB, Authors, NoRowsError
 
 GET_AUTHOR: Final = "select * from authors where id = $1"
 
 
-async def get_author(
-    conn: Connection | Pool | PoolConnectionProxy, *, id: int
-) -> Authors | None:
+async def get_author(db: DB, *, id: int) -> Authors | None:
     """Becomes the docstring."""
-    row = await conn.fetchrow(GET_AUTHOR, id)
+    row = await db.fetchrow(GET_AUTHOR, id)
     return None if row is None else Authors.from_record(row)
 
 
 CREATE_AUTHOR: Final = "insert into authors (name, bio) values ($1, $2) returning *"
 
 
-async def create_author(
-    conn: Connection | Pool | PoolConnectionProxy, *, name: str, bio: str | None
-) -> Authors:
-    row = await conn.fetchrow(CREATE_AUTHOR, name, bio)
+async def create_author(db: DB, *, name: str, bio: str | None) -> Authors:
+    row = await db.fetchrow(CREATE_AUTHOR, name, bio)
     if row is None:
         raise NoRowsError("query CreateAuthor returned no rows")
     return Authors.from_record(row)
@@ -133,8 +127,6 @@ async def create_author(
 DELETE_AUTHOR: Final = "delete from authors where id = $1"
 
 
-async def delete_author(
-    conn: Connection | Pool | PoolConnectionProxy, *, p1: int
-) -> None:
-    await conn.execute(DELETE_AUTHOR, p1)
+async def delete_author(db: DB, *, p1: int) -> None:
+    await db.execute(DELETE_AUTHOR, p1)
 ```

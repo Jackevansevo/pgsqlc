@@ -7,10 +7,9 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Final, Self
 
-from asyncpg import Connection, Pool, Record
-from asyncpg.pool import PoolConnectionProxy
+from asyncpg import Record
 
-from .models import AuthUsers, Books
+from .models import DB, AuthUsers, Books
 
 CREATE_BOOK: Final = """
 insert into books (author_id, title, pages, published)
@@ -20,14 +19,9 @@ returning *
 
 
 async def create_book(
-    conn: Connection | Pool | PoolConnectionProxy,
-    *,
-    author_id: int,
-    title: str,
-    pages: int,
-    published: date,
+    db: DB, *, author_id: int, title: str, pages: int, published: date
 ) -> Books | None:
-    row = await conn.fetchrow(CREATE_BOOK, author_id, title, pages, published)
+    row = await db.fetchrow(CREATE_BOOK, author_id, title, pages, published)
     return None if row is None else Books.from_record(row)
 
 
@@ -48,11 +42,9 @@ class AuthorBooksRow:
         return cls(author=r[0], title=r[1])
 
 
-async def author_books(
-    conn: Connection | Pool | PoolConnectionProxy,
-) -> list[AuthorBooksRow]:
+async def author_books(db: DB) -> list[AuthorBooksRow]:
     """Every author with their books; LEFT JOIN makes all columns nullable."""
-    return [AuthorBooksRow.from_record(r) for r in await conn.fetch(AUTHOR_BOOKS)]
+    return [AuthorBooksRow.from_record(r) for r in await db.fetch(AUTHOR_BOOKS)]
 
 
 AUTHOR_BOOKS_INNER: Final = """
@@ -72,13 +64,11 @@ class AuthorBooksInnerRow:
         return cls(author=r[0], title=r[1])
 
 
-async def author_books_inner(
-    conn: Connection | Pool | PoolConnectionProxy, *, title: str
-) -> list[AuthorBooksInnerRow]:
+async def author_books_inner(db: DB, *, title: str) -> list[AuthorBooksInnerRow]:
     """LEFT JOIN that Postgres turns into an inner join."""
     return [
         AuthorBooksInnerRow.from_record(r)
-        for r in await conn.fetch(AUTHOR_BOOKS_INNER, title)
+        for r in await db.fetch(AUTHOR_BOOKS_INNER, title)
     ]
 
 
@@ -97,19 +87,15 @@ class BookTitlesRow:
         return cls(title=r[0], published=r[1])
 
 
-async def book_titles(
-    conn: Connection | Pool | PoolConnectionProxy, *, author_id: int
-) -> list[BookTitlesRow]:
+async def book_titles(db: DB, *, author_id: int) -> list[BookTitlesRow]:
     return [
-        BookTitlesRow.from_record(r) for r in await conn.fetch(BOOK_TITLES, author_id)
+        BookTitlesRow.from_record(r) for r in await db.fetch(BOOK_TITLES, author_id)
     ]
 
 
 CREATE_USER: Final = "insert into auth.users (email) values ($1) returning *"
 
 
-async def create_user(
-    conn: Connection | Pool | PoolConnectionProxy, *, email: str
-) -> AuthUsers | None:
-    row = await conn.fetchrow(CREATE_USER, email)
+async def create_user(db: DB, *, email: str) -> AuthUsers | None:
+    row = await db.fetchrow(CREATE_USER, email)
     return None if row is None else AuthUsers.from_record(row)

@@ -83,6 +83,9 @@ class RecordDef:
 # Defined in every generated ``models.py`` and raised by ``:single`` queries.
 NO_ROWS_ERROR = "NoRowsError"
 
+# Defined in every generated ``models.py``; the type of each query's ``db``.
+DB_ALIAS = "DB"
+
 
 class Command(StrEnum):
     ONE = "one"
