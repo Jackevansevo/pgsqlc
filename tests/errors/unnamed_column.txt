@@ -1,0 +1,1 @@
+tests/errors/unnamed_column.sql:1: query Unnamed: column name '?column?' is not a valid Python identifier; alias or rename it

@@ -1,0 +1,1 @@
+tests/errors/no_rows_error_collision.sql:1: table public.no_rows_error and pgsqlc's exception both map to the class name NoRowsError

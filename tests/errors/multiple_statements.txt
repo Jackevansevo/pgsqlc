@@ -1,0 +1,1 @@
+tests/errors/multiple_statements.sql:1: postgres: cannot insert multiple commands into a prepared statement

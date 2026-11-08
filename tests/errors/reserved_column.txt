@@ -1,0 +1,1 @@
+tests/errors/reserved_column.sql:1: query Reserved: column name 'from_record' is reserved; alias or rename it

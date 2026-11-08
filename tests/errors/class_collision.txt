@@ -1,0 +1,1 @@
+tests/errors/class_collision.sql:4: table auth.users and enum public.auth_users both map to the class name AuthUsers

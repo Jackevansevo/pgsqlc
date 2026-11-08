@@ -1,0 +1,1 @@
+tests/errors/untyped_param.sql:1: postgres: could not determine data type of parameter $1

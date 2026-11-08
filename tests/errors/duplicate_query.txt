@@ -1,0 +1,1 @@
+tests/errors/duplicate_query.sql:4: duplicate query name Get (first defined on line 1)

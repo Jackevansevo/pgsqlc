@@ -1,0 +1,1 @@
+tests/errors/anonymous_record.sql:1: columns of pseudo-type record are not supported (e.g. an anonymous row: select its columns individually)

@@ -1,0 +1,1 @@
+tests/errors/unsupported_command.sql:1: unsupported command :copyfrom (supported: :one, :single, :many, :exec, :execrows)

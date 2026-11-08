@@ -1,0 +1,1 @@
+tests/errors/sql_before_name.sql:1: SQL found before the first '-- name:' annotation

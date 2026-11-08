@@ -1,0 +1,68 @@
+[project]
+name = "pgsqlc"
+version = "0.1.0"
+description = "sqlc-style typed asyncpg code generator that asks Postgres for every type"
+readme = "README.md"
+authors = [
+    { name = "Jack Evans", email = "jack.william.evans@icloud.com" }
+]
+requires-python = ">=3.15"
+dependencies = [
+    "psycopg[binary]>=3.3.8",
+    "ruff>=0.17.4",
+]
+
+[project.scripts]
+pgsqlc = "pgsqlc.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "asyncpg>=0.32.0",
+    "asyncpg-stubs>=0.32.0",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "ty>=0.0.99",
+]
+
+[tool.mypy]
+strict = true
+python_version = "3.15"
+files = ["src", "tests"]
+
+[tool.ty.environment]
+python-version = "3.15"
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+[tool.ty.rules]
+blanket-ignore-comment = "error"
+dynamic-function-decorator-return = "error"
+missing-type-argument = "error"
+possibly-unresolved-reference = "error"
+unsound-assignment = "error"
+unsound-return-statement = "error"
+unsound-yield = "error"
+unsupported-dynamic-base = "error"
+division-by-zero = "error"
+possibly-missing-attribute = "error"
+possibly-missing-import = "error"
+
+[tool.ty.analysis]
+strict-equality-semantics = true
+strict-generic-narrowing = true
+
+[tool.ruff]
+target-version = "py315"
+
+[tool.ruff.lint]
+extend-select = ["ANN", "RUF", "PYI"]
+preview = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

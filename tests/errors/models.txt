@@ -1,0 +1,1 @@
+tests/errors/models.sql: module name 'models' is reserved

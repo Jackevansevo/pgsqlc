@@ -1,0 +1,1 @@
+tests/errors/unsupported_type.sql:1: type pg_catalog.pg_snapshot is not supported

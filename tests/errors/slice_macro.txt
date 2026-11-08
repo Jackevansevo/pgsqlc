@@ -1,0 +1,1 @@
+tests/errors/slice_macro.sql:1: query Many: sqlc.slice() is not supported (use sqlc.arg/sqlc.narg; for lists use = ANY(sqlc.arg(name)))

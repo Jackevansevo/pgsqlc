@@ -1,0 +1,1 @@
+tests/errors/enum_member_collision.sql:1: enum public.clash values 'a-b' and 'a_b' both map to member A_B

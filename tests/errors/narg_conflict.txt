@@ -1,0 +1,1 @@
+tests/errors/narg_conflict.sql:1: query Conflict: parameter 'n' is used both as sqlc.arg and sqlc.narg

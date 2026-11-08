@@ -1,0 +1,1 @@
+tests/errors/no_queries.sql: no '-- name:' annotated queries found

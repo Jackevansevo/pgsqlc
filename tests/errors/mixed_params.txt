@@ -1,0 +1,1 @@
+tests/errors/mixed_params.sql:1: query Mixed: a query cannot mix $N placeholders with named parameters

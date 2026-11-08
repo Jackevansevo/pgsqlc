@@ -1,0 +1,1 @@
+tests/errors/enum_case_collision.sql:1: enum public.case_clash values 'FooBar' and 'foo_bar' both map to member FOO_BAR

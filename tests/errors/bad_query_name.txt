@@ -1,0 +1,1 @@
+tests/errors/bad_query_name.sql:1: query name 'getAuthor' must be PascalCase ([A-Z][A-Za-z0-9]*)

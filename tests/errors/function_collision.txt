@@ -1,0 +1,1 @@
+tests/errors/function_collision.sql:4: queries GetByID and GetById both map to get_by_id()

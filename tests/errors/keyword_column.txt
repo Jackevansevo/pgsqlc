@@ -1,0 +1,1 @@
+tests/errors/keyword_column.sql:1: query Keyword: column name 'class' is not a valid Python identifier; alias or rename it

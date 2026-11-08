@@ -1,0 +1,1 @@
+tests/errors/one_without_columns.sql:1: query Update returns no columns; use :exec or :execrows
